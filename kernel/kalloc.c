@@ -86,6 +86,7 @@ getfreemem()
 {
   uint64 size = 0;
 
+  // count free pages in freelist
   struct run *r = kmem.freelist;
   while (r) {
     size += PGSIZE;
