@@ -74,7 +74,50 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
+  // interface: pgaccess(address, num_pages, result)
+  // - address: starting VA of the first user page
+  // - num_pages: the number of pages to check
+  // - result: a pointer to bitmask data structure to encode accessed pages
+
+  // get call arguments
+  uint64 address;
+  argaddr(0, &address);
+
+  int num_pages;
+  argint(1, &num_pages);
+
+  uint64 result;
+  argaddr(2, &result);
+
+  // fail if bad arguments
+  if (num_pages <= 0) {
+    return -1;
+  }
+  if (num_pages > 32) { // if too large
+    return -1;
+  }
+
+  // temp bitmask to encode accessed pages
+  unsigned int accessed = 0;
+
+  pagetable_t pagetable = myproc()->pagetable;
+  for (int i = 0; i < num_pages; i++) {
+    uint64 page_address = address + i*PGSIZE;
+    pte_t *pte = walk(pagetable, page_address, 0);
+
+    if ((*pte & PTE_A) == 0) { // if not accessed
+      continue;
+    }
+
+    accessed |= (1U << i);
+
+    // clear accessed flag
+    *pte &= ~(PTE_A);
+  }
+
+  // return to user
+  copyout(pagetable, result, (char *)&accessed, sizeof(unsigned int));
+
   return 0;
 }
 #endif
