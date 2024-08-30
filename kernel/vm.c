@@ -449,3 +449,67 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+// flag to print permissions together on printing page entry
+#define VMPRINT_PRINT_PERMISSIONS 0
+
+// indents for each page directory level
+char* VMPRINT_INDENTS[] = { " ..", " .. ..", " .. .. .." };
+
+void vmprint_directory(pagetable_t directory, int level);
+void vmprint_entry(pte_t entry, int index, int level);
+
+void
+vmprint(pagetable_t table) {
+  printf("page table %p\n", table);
+
+  // print root (level 0) page directory
+  vmprint_directory(table, 0);
+}
+
+void
+vmprint_directory(pagetable_t directory, int level) {
+  // assert
+  if (level < 0 || level > 2) {
+    panic("vmprint_directory: invalid level");
+  }
+
+  // print for each entry in the directory
+  for (int i = 0; i < 512; i++) {
+    pte_t entry = directory[i];
+
+    // skip if not valid page
+    if ((entry & PTE_V) == 0) {
+      continue;
+    }
+
+    vmprint_entry(entry, i, level);
+
+    // skip if leaf page
+    if (level == 2) {
+      continue;
+    }
+
+    pagetable_t subdirectory = (pagetable_t)PTE2PA(entry);
+    vmprint_directory(subdirectory, level+1);
+  }
+}
+
+void
+vmprint_entry(pte_t entry, int index, int level) {
+  uint64 address = PTE2PA(entry);
+  char* indent = VMPRINT_INDENTS[level];
+
+#if VMPRINT_PRINT_PERMISSIONS
+  char* r = (entry & PTE_R) ? "R" : "-";
+  char* w = (entry & PTE_W) ? "W" : "-";
+  char* x = (entry & PTE_X) ? "X" : "-";
+  char* u = (entry & PTE_U) ? "U" : "-";
+
+  // print entry contents with permissions
+  printf("%s%d: pte %p pa %p (%s%s%s%s)\n", indent, index, entry, address, r, w, x, u);
+#else
+  // print entry contents
+  printf("%s%d: pte %p pa %p\n", indent, index, entry, address);
+#endif
+}
