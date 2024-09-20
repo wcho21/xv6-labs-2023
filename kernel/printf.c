@@ -133,3 +133,19 @@ printfinit(void)
   initlock(&pr.lock, "pr");
   pr.locking = 1;
 }
+
+static uint64
+get_prev_fp(uint64 fp) {
+  return *(uint64 *)(fp - 16);
+}
+
+void
+backtrace(void)
+{
+  printf("backtrace:\n");
+
+  for (uint64 fp = r_fp(); fp > PGROUNDDOWN(fp); fp = get_prev_fp(fp)) { // for each fp in a page
+    uint64 prev_ra = fp - 8;
+    printf("%x\n", *(uint64 *)prev_ra);
+  }
+}
