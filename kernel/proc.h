@@ -108,4 +108,6 @@ struct proc {
   int alarm_interval;
   uint64 alarm_handler;
   int alarm_ticks_passed;
+  struct trapframe alarm_trapframe;
+  int alarm_handling;
 };

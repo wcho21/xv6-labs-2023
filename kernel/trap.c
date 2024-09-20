@@ -78,10 +78,15 @@ usertrap(void)
 
   if(which_dev == 2) {
     p->alarm_ticks_passed += 1;
+
     int alarm_on = p->alarm_interval > 0;
-    int alarm_time = p->alarm_ticks_passed > p->alarm_interval;
-    if (alarm_on && alarm_time) {
+    int alarm_time = p->alarm_ticks_passed >= p->alarm_interval;
+    int alarm_not_handling = !p->alarm_handling;
+
+    if (alarm_on && alarm_time && alarm_not_handling) {
       p->alarm_ticks_passed -= p->alarm_interval;
+      p->alarm_handling = 1;
+      p->alarm_trapframe = *(p->trapframe);
 
       // call handler
       p->trapframe->epc = p->alarm_handler;

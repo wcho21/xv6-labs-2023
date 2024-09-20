@@ -150,6 +150,7 @@ found:
   p->alarm_interval = 0;
   p->alarm_handler = 0;
   p->alarm_ticks_passed = 0;
+  p->alarm_handling = 0;
 
   return p;
 }
